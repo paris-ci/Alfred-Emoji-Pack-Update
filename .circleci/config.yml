@@ -11,6 +11,9 @@ jobs:
       - run:
           name: Create the file
           command: "python main.py"
+      - store_artifacts:
+          name: Keep the file
+          path: "snippets/Emoji Pack Update.alfredsnippets"
   tests:
     docker:
       - image: circleci/python:latest
@@ -19,15 +22,11 @@ jobs:
       - run:
           name: Run some tests
           command: echo 'Nothing yet'
-  release:
-    - store_artifacts:
-      path: "snippets/Emoji Pack Update.alfredsnippets"
+
 
 workflows:
   version: 2
-  build_and_release:
+  build:
     jobs:
       - build
-      - release:
-          requires:
-            - build
+      - tests
