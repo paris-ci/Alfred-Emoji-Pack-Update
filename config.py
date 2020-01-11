@@ -1,6 +1,8 @@
 languages_to_generate = ["en"]  # For now, there is no change between languages, but maybe in the future, shortcodes will be I18N'ed, and the script is ready for that.
 output_dir = "snippets/"
 cache_dir = "cache/"  # WARNING : This will get emptied!
+enable_skins = True   # Use ok_hand_tone1 for example
+
 
 # == Config test, do not edit after this line. ==
 

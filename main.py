@@ -47,6 +47,10 @@ def main():
             emoji = emoji_info["emoji"]
             for shortcode in emoji_info.get("shortcodes", []):
                 emojis_to_convert[shortcode] = emoji
+            if config.enable_skins:
+                for skin in emoji_info.get("skins", []):
+                    for shortcode in skin.get("shortcodes", []):
+                        emojis_to_convert[shortcode] = skin["emoji"]
 
     for shortcode, emoji in emojis_to_convert.items():
         print(f":{shortcode}: -> {emoji}")
