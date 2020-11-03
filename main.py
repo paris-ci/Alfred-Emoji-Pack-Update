@@ -19,6 +19,9 @@ def download_emoji_file(language) -> List[Dict]:
     file = requests.get(f"https://cdn.jsdelivr.net/npm/emojibase-data@latest/{language}/data.json")
     return file.json()
 
+def download_shortcodes(language) -> Dict:
+    file = requests.get(f"https://cdn.jsdelivr.net/npm/emojibase-data@latest/{language}/shortcodes/emojibase.json")
+    return file.json()
 
 def generate_alfred_snippet_file(key, value):
     uid = str(uuid.uuid4())
@@ -37,19 +40,25 @@ def generate_alfred_snippet_file(key, value):
     except OSError:
         pass
 
+def get_shortcodes(shortcodes, hexcode):
+    codes = shortcodes.get(hexcode, [])
+    if type(codes) is not list:
+        codes = [codes]
+    return codes
 
 def main():
     emojis_to_convert = {}  # {"shortcode": "emoji"}
 
     for language in config.languages_to_generate:
+        shortcodes = download_shortcodes(language)
         emoji_file = download_emoji_file(language)
         for emoji_info in emoji_file:
             emoji = emoji_info["emoji"]
-            for shortcode in emoji_info.get("shortcodes", []):
+            for shortcode in get_shortcodes(shortcodes, emoji_info['hexcode']):
                 emojis_to_convert[shortcode] = emoji
             if config.enable_skins:
                 for skin in emoji_info.get("skins", []):
-                    for shortcode in skin.get("shortcodes", []):
+                    for shortcode in get_shortcodes(shortcodes, skin['hexcode']):
                         emojis_to_convert[shortcode] = skin["emoji"]
 
     for shortcode, emoji in emojis_to_convert.items():
