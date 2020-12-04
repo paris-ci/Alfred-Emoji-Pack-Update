@@ -31,7 +31,7 @@ def generate_alfred_snippet_file(key, value):
             "snippet": f"{value}",
             "uid": uid,
             "name": f"{value} :{key}:",
-            "keyword": f":{key}:"
+            "keyword": f"{key}"
         }
     }
     try:
