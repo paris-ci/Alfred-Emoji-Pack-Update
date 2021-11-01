@@ -1,7 +1,8 @@
 languages_to_generate = ["en"]  # For now, there is no change between languages, but maybe in the future, shortcodes will be I18N'ed, and the script is ready for that.
 output_dir = "snippets/"
-cache_dir = "cache/"  # WARNING : This will get emptied!
-enable_skins = True   # Use ok_hand_tone1 for example
+cache_dir_def = "cache/def/"        # WARNING : This will get emptied!
+cache_dir_dedupe = "cache/dedupe/"  # WARNING : This will get emptied!
+enable_skins = True                # Use ok_hand_tone1 for example
 
 
 # == Config test, do not edit after this line. ==
@@ -21,4 +22,5 @@ AVAILABLE_LANGS = ["da", "de", "en", "en-gb", "es", "es-mx", "fr", "it", "ja", "
 
 assert set(languages_to_generate).issubset(set(AVAILABLE_LANGS)), "The language specified cound't be found."
 ensure_directory(output_dir)
-ensure_directory(cache_dir, empty=True)
+ensure_directory(cache_dir_def, empty=True)
+ensure_directory(cache_dir_dedupe, empty=True)
