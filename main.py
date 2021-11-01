@@ -23,7 +23,7 @@ def download_shortcodes(language) -> Dict:
     file = requests.get(f"https://cdn.jsdelivr.net/npm/emojibase-data@latest/{language}/shortcodes/emojibase.json")
     return file.json()
 
-def generate_alfred_snippet_file(key, value):
+def generate_alfred_snippet_file(key, value, cache_dir):
     uid = str(uuid.uuid4())
 
     content = {
@@ -35,7 +35,7 @@ def generate_alfred_snippet_file(key, value):
         }
     }
     try:
-        with open(f"{config.cache_dir}/{value} {key} - {uid}.json", "w") as f:
+        with open(f"{cache_dir}/{value} {key} - {uid}.json", "w") as f:
             json.dump(content, f, ensure_ascii=False)
     except OSError:
         pass
@@ -63,14 +63,24 @@ def main():
 
     for shortcode, emoji in emojis_to_convert.items():
         print(f":{shortcode}: -> {emoji}")
-        generate_alfred_snippet_file(shortcode, emoji)
+        generate_alfred_snippet_file(shortcode, emoji, config.cache_dir_def)
+        if any((sc.startswith(shortcode) and sc != shortcode) for sc in emojis_to_convert):
+          shortcode += ' '
+          print(f":{shortcode}:-> {emoji} (deduped version)")
+        generate_alfred_snippet_file(shortcode, emoji, config.cache_dir_dedupe)
 
-    shutil.copyfile("icon.png", config.cache_dir + "icon.png")
-    file_name = f"./{config.output_dir}Emoji Pack Update.alfredsnippets"
-    print(f"Saving to {file_name}")
+    shutil.copyfile("icon.png", config.cache_dir_def + "icon.png")
+    shutil.copyfile("icon.png", config.cache_dir_dedupe + "icon.png")
+    file_name_def = f"./{config.output_dir}Emoji Pack Update.alfredsnippets"
+    file_name_dedupe = f"./{config.output_dir}Emoji Pack Update Deduped.alfredsnippets"
+    print(f"Saving to {file_name_def}")
 
-    shutil.make_archive(file_name, "zip", root_dir=config.cache_dir)
-    os.rename(file_name + ".zip", file_name)
+    shutil.make_archive(file_name_def, "zip", root_dir=config.cache_dir_def)
+    os.rename(file_name_def + ".zip", file_name_def)
+
+    print(f"Saving to {file_name_dedupe}")
+    shutil.make_archive(file_name_dedupe, "zip", root_dir=config.cache_dir_dedupe)
+    os.rename(file_name_dedupe + ".zip", file_name_dedupe)
 
 
 if __name__ == '__main__':
