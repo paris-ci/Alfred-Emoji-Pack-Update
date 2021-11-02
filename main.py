@@ -82,14 +82,14 @@ def main():
         if any((sc.startswith(shortcode) and sc != shortcode) for sc in emojis_to_convert):
           shortcode += ' '
           print(f":{shortcode}: ⟶  {emoji} (deduped version)")
-        generate_alfred_snippet_file(shortcode, emoji, config.cache_dir_dedupedecol, decol=True)
+        generate_alfred_snippet_file(shortcode, emoji, config.cache_dir_decoldedup, decol=True)
 
-    shutil.copyfile("icon.png", config.cache_dir_def         + "icon.png")
-    shutil.copyfile("icon.png", config.cache_dir_dedupedecol + "icon.png")
-    file_name_def         = f"./{config.output_dir}Emoji Pack Update.alfredsnippets"
-    file_name_dedupedecol = f"./{config.output_dir}Emoji Pack Update DedupedDecoled.alfredsnippets"
+    shutil.copyfile("icon.png", config.cache_dir_def        + "icon.png")
     shutil.copyfile("icon.png", config.cache_dir_decolsp    + "icon.png")
-    file_name_decolsp    = f"./{config.output_dir}Emoji Pack Upd DecolSp.alfredsnippets"
+    shutil.copyfile("icon.png", config.cache_dir_decoldedup + "icon.png")
+    file_name_def        = f"./{config.output_dir}Emoji Pack Update.alfredsnippets"
+    file_name_decolsp    = f"./{config.output_dir}Emoji Pack DecolSp.alfredsnippets"
+    file_name_decoldedup = f"./{config.output_dir}Emoji Pack DecolDedup.alfredsnippets"
 
     print(f"Saving to {file_name_def}")
     shutil.make_archive(file_name_def, "zip", root_dir=config.cache_dir_def)
@@ -99,9 +99,9 @@ def main():
     shutil.make_archive(file_name_decolsp, "zip", root_dir=config.cache_dir_decolsp)
     os.rename(file_name_decolsp + ".zip", file_name_decolsp)
 
-    print(f"Saving to {file_name_dedupedecol}")
-    shutil.make_archive(file_name_dedupedecol, "zip", root_dir=config.cache_dir_dedupedecol)
-    os.rename(file_name_dedupedecol + ".zip", file_name_dedupedecol)
+    print(f"Saving to {file_name_decoldedup}")
+    shutil.make_archive(file_name_decoldedup, "zip", root_dir=config.cache_dir_decoldedup)
+    os.rename(file_name_decoldedup + ".zip", file_name_decoldedup)
 
 if __name__ == '__main__':
     main()
