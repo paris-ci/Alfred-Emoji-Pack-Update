@@ -82,14 +82,11 @@ def main():
         if any((sc.startswith(shortcode) and sc != shortcode) for sc in emojis_to_convert):
           shortcode += ' '
           print(f":{shortcode}: ⟶  {emoji} (deduped version)")
-        generate_alfred_snippet_file(shortcode, emoji, config.cache_dir_dedupe)
         generate_alfred_snippet_file(shortcode, emoji, config.cache_dir_dedupedecol, decol=True)
 
     shutil.copyfile("icon.png", config.cache_dir_def         + "icon.png")
-    shutil.copyfile("icon.png", config.cache_dir_dedupe      + "icon.png")
     shutil.copyfile("icon.png", config.cache_dir_dedupedecol + "icon.png")
     file_name_def         = f"./{config.output_dir}Emoji Pack Update.alfredsnippets"
-    file_name_dedupe      = f"./{config.output_dir}Emoji Pack Update Deduped.alfredsnippets"
     file_name_dedupedecol = f"./{config.output_dir}Emoji Pack Update DedupedDecoled.alfredsnippets"
     shutil.copyfile("icon.png", config.cache_dir_decolsp    + "icon.png")
     file_name_decolsp    = f"./{config.output_dir}Emoji Pack Upd DecolSp.alfredsnippets"
@@ -101,10 +98,6 @@ def main():
     print(f"Saving to {file_name_decolsp}")
     shutil.make_archive(file_name_decolsp, "zip", root_dir=config.cache_dir_decolsp)
     os.rename(file_name_decolsp + ".zip", file_name_decolsp)
-
-    print(f"Saving to {file_name_dedupe}")
-    shutil.make_archive(file_name_dedupe, "zip", root_dir=config.cache_dir_dedupe)
-    os.rename(file_name_dedupe + ".zip", file_name_dedupe)
 
     print(f"Saving to {file_name_dedupedecol}")
     shutil.make_archive(file_name_dedupedecol, "zip", root_dir=config.cache_dir_dedupedecol)

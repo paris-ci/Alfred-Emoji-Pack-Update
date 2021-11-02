@@ -2,7 +2,6 @@ languages_to_generate = ["en"]  # For now, there is no change between languages,
 output_dir            = "snippets/"
 cache_dir_def         = "cache/def/"          # WARNING : cache dirs will get emptied!
 cache_dir_decolsp     = "cache/decolsp/"
-cache_dir_dedupe      = "cache/dedupe/"
 cache_dir_dedupedecol = "cache/dedupedecol/"
 enable_skins          = True                  # Use ok_hand_tone1 for example
 
@@ -26,5 +25,4 @@ assert set(languages_to_generate).issubset(set(AVAILABLE_LANGS)), "The language 
 ensure_directory(output_dir)
 ensure_directory(cache_dir_def         , empty=True)
 ensure_directory(cache_dir_decolsp     , empty=True)
-ensure_directory(cache_dir_dedupe      , empty=True)
 ensure_directory(cache_dir_dedupedecol , empty=True)
