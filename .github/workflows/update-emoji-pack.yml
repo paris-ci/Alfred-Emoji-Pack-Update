@@ -1,0 +1,93 @@
+name: Update Emoji Pack
+
+on:
+  schedule:
+    # Run daily at 00:00 UTC to check for new emojibase releases
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    # Allow manual triggering
+
+jobs:
+  check-and-update:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      
+      - name: Install dependencies
+        run: |
+          pip install requests
+      
+      - name: Get current emojibase version
+        id: get-version
+        run: |
+          # Get the latest version from npm
+          LATEST_VERSION=$(curl -s https://registry.npmjs.org/emojibase-data | jq -r '.["dist-tags"].latest')
+          echo "Latest version: $LATEST_VERSION"
+          echo "latest_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
+          
+          # Extract major version
+          MAJOR_VERSION=$(echo $LATEST_VERSION | cut -d. -f1)
+          echo "major_version=$MAJOR_VERSION" >> $GITHUB_OUTPUT
+          
+          # Check if we have a stored version
+          if [ -f .github/.emojibase-version ]; then
+            STORED_VERSION=$(cat .github/.emojibase-version)
+            STORED_MAJOR=$(echo $STORED_VERSION | cut -d. -f1)
+            echo "Stored version: $STORED_VERSION (major: $STORED_MAJOR)"
+            echo "stored_version=$STORED_VERSION" >> $GITHUB_OUTPUT
+            echo "stored_major=$STORED_MAJOR" >> $GITHUB_OUTPUT
+          else
+            echo "No stored version found"
+            echo "stored_version=" >> $GITHUB_OUTPUT
+            echo "stored_major=0" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Check if major version changed
+        id: check-update
+        run: |
+          LATEST_MAJOR="${{ steps.get-version.outputs.major_version }}"
+          STORED_MAJOR="${{ steps.get-version.outputs.stored_major }}"
+          
+          if [ "$STORED_MAJOR" != "$LATEST_MAJOR" ] && [ "$STORED_MAJOR" != "0" ]; then
+            echo "Major version changed from $STORED_MAJOR to $LATEST_MAJOR"
+            echo "should_update=true" >> $GITHUB_OUTPUT
+          elif [ "$STORED_MAJOR" = "0" ]; then
+            echo "First run, will update"
+            echo "should_update=true" >> $GITHUB_OUTPUT
+          else
+            echo "No major version change"
+            echo "should_update=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Run main.py
+        if: steps.check-update.outputs.should_update == 'true'
+        run: |
+          python main.py
+      
+      - name: Store version
+        if: steps.check-update.outputs.should_update == 'true'
+        run: |
+          mkdir -p .github
+          echo "${{ steps.get-version.outputs.latest_version }}" > .github/.emojibase-version
+      
+      - name: Commit and push changes
+        if: steps.check-update.outputs.should_update == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add snippets/ .github/.emojibase-version
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update emoji pack to emojibase ${{ steps.get-version.outputs.latest_version }}"
+            git push
+          fi
