@@ -48,7 +48,7 @@ jobs:
           else
             echo "No stored version found"
             echo "stored_version=" >> $GITHUB_OUTPUT
-            echo "stored_major=0" >> $GITHUB_OUTPUT
+            echo "stored_major=" >> $GITHUB_OUTPUT
           fi
       
       - name: Check if major version changed
@@ -57,12 +57,11 @@ jobs:
           LATEST_MAJOR="${{ steps.get-version.outputs.major_version }}"
           STORED_MAJOR="${{ steps.get-version.outputs.stored_major }}"
           
-          if [ "$STORED_MAJOR" != "$LATEST_MAJOR" ]; then
-            if [ "$STORED_MAJOR" = "0" ]; then
-              echo "First run, initializing with version $LATEST_MAJOR"
-            else
-              echo "Major version changed from $STORED_MAJOR to $LATEST_MAJOR"
-            fi
+          if [ -z "$STORED_MAJOR" ]; then
+            echo "First run, initializing with version $LATEST_MAJOR"
+            echo "should_update=true" >> $GITHUB_OUTPUT
+          elif [ "$STORED_MAJOR" != "$LATEST_MAJOR" ]; then
+            echo "Major version changed from $STORED_MAJOR to $LATEST_MAJOR"
             echo "should_update=true" >> $GITHUB_OUTPUT
           else
             echo "No major version change (current: $LATEST_MAJOR)"
@@ -84,7 +83,7 @@ jobs:
         if: steps.check-update.outputs.should_update == 'true'
         run: |
           # Verify snippets were generated
-          if [ ! -d "snippets" ] || [ -z "$(ls -A snippets/*.alfredsnippets 2>/dev/null)" ]; then
+          if [ ! -d "snippets" ] || ! find snippets -name '*.alfredsnippets' -type f | grep -q .; then
             echo "Error: No snippet files were generated"
             exit 1
           fi
