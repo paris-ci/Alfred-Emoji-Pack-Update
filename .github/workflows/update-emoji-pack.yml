@@ -62,11 +62,11 @@ jobs:
           if [ -z "$STORED_MAJOR" ]; then
             echo "First run, initializing with version $LATEST_MAJOR"
             echo "should_update=true" >> $GITHUB_OUTPUT
-          elif [ "$STORED_MAJOR" != "$LATEST_MAJOR" ]; then
-            echo "Major version changed from $STORED_MAJOR to $LATEST_MAJOR"
+          elif [ "$STORED_MAJOR" -lt "$LATEST_MAJOR" ]; then
+            echo "Major version increased from $STORED_MAJOR to $LATEST_MAJOR"
             echo "should_update=true" >> $GITHUB_OUTPUT
           else
-            echo "No major version change (current: $LATEST_MAJOR)"
+            echo "No major version increase (current: $LATEST_MAJOR, stored: $STORED_MAJOR)"
             echo "should_update=false" >> $GITHUB_OUTPUT
           fi
       
@@ -75,27 +75,32 @@ jobs:
         run: |
           python main.py
       
-      - name: Store version
-        if: steps.check-update.outputs.should_update == 'true'
-        run: |
-          mkdir -p .github
-          echo "${{ steps.get-version.outputs.latest_version }}" > .github/.emojibase-version
-      
       - name: Commit and push changes
         if: steps.check-update.outputs.should_update == 'true'
         run: |
           # Verify snippets were generated
-          if [ ! -d "snippets" ] || ! find snippets -name '*.alfredsnippets' -type f | grep -q .; then
+          if ! find snippets -name '*.alfredsnippets' -type f 2>/dev/null | grep -q .; then
             echo "Error: No snippet files were generated"
             exit 1
           fi
           
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add snippets/ .github/.emojibase-version
+          git add snippets/
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
             git commit -m "Update emoji pack to emojibase ${{ steps.get-version.outputs.latest_version }}"
             git push
           fi
+      
+      - name: Store version
+        if: steps.check-update.outputs.should_update == 'true'
+        run: |
+          mkdir -p .github
+          echo "${{ steps.get-version.outputs.latest_version }}" > .github/.emojibase-version
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add .github/.emojibase-version
+          git commit -m "Update tracked emojibase version to ${{ steps.get-version.outputs.latest_version }}"
+          git push
