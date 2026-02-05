@@ -60,8 +60,8 @@ jobs:
           STORED_MAJOR="${{ steps.get-version.outputs.stored_major }}"
           
           # Validate that major versions are numeric
-          if [ -n "$LATEST_MAJOR" ] && ! [[ "$LATEST_MAJOR" =~ ^[0-9]+$ ]]; then
-            echo "Error: Latest major version is not numeric: $LATEST_MAJOR"
+          if [ -z "$LATEST_MAJOR" ] || ! [[ "$LATEST_MAJOR" =~ ^[0-9]+$ ]]; then
+            echo "Error: Latest major version is missing or not numeric: '$LATEST_MAJOR'"
             exit 1
           fi
           
@@ -94,6 +94,7 @@ jobs:
           git config --local user.name "github-actions[bot]"
       
       - name: Commit and push changes
+        id: commit-snippets
         if: steps.check-update.outputs.should_update == 'true'
         run: |
           set -e  # Exit on any error
@@ -106,13 +107,15 @@ jobs:
           git add snippets/
           if git diff --staged --quiet; then
             echo "No changes to commit"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
           else
             git commit -m "Update emoji pack to emojibase ${{ steps.get-version.outputs.latest_version }}"
             git push
+            echo "has_changes=true" >> $GITHUB_OUTPUT
           fi
       
       - name: Store version
-        if: steps.check-update.outputs.should_update == 'true'
+        if: steps.check-update.outputs.should_update == 'true' && steps.commit-snippets.outputs.has_changes == 'true'
         run: |
           set -e  # Exit on any error
           mkdir -p .github
