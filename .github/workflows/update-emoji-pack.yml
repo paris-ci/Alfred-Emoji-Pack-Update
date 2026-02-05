@@ -59,15 +59,27 @@ jobs:
           LATEST_MAJOR="${{ steps.get-version.outputs.major_version }}"
           STORED_MAJOR="${{ steps.get-version.outputs.stored_major }}"
           
+          # Validate that major versions are numeric
+          if [ -n "$LATEST_MAJOR" ] && ! [[ "$LATEST_MAJOR" =~ ^[0-9]+$ ]]; then
+            echo "Error: Latest major version is not numeric: $LATEST_MAJOR"
+            exit 1
+          fi
+          
           if [ -z "$STORED_MAJOR" ]; then
             echo "First run, initializing with version $LATEST_MAJOR"
             echo "should_update=true" >> $GITHUB_OUTPUT
-          elif [ "$STORED_MAJOR" -lt "$LATEST_MAJOR" ]; then
-            echo "Major version increased from $STORED_MAJOR to $LATEST_MAJOR"
-            echo "should_update=true" >> $GITHUB_OUTPUT
           else
-            echo "No major version increase (current: $LATEST_MAJOR, stored: $STORED_MAJOR)"
-            echo "should_update=false" >> $GITHUB_OUTPUT
+            if ! [[ "$STORED_MAJOR" =~ ^[0-9]+$ ]]; then
+              echo "Error: Stored major version is not numeric: $STORED_MAJOR"
+              exit 1
+            fi
+            if [ "$STORED_MAJOR" -lt "$LATEST_MAJOR" ]; then
+              echo "Major version increased from $STORED_MAJOR to $LATEST_MAJOR"
+              echo "should_update=true" >> $GITHUB_OUTPUT
+            else
+              echo "No major version increase (current: $LATEST_MAJOR, stored: $STORED_MAJOR)"
+              echo "should_update=false" >> $GITHUB_OUTPUT
+            fi
           fi
       
       - name: Run main.py
@@ -75,17 +87,22 @@ jobs:
         run: |
           python main.py
       
+      - name: Configure git
+        if: steps.check-update.outputs.should_update == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+      
       - name: Commit and push changes
         if: steps.check-update.outputs.should_update == 'true'
         run: |
+          set -e  # Exit on any error
           # Verify snippets were generated
           if ! find snippets -name '*.alfredsnippets' -type f 2>/dev/null | grep -q .; then
             echo "Error: No snippet files were generated"
             exit 1
           fi
           
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
           git add snippets/
           if git diff --staged --quiet; then
             echo "No changes to commit"
@@ -97,10 +114,9 @@ jobs:
       - name: Store version
         if: steps.check-update.outputs.should_update == 'true'
         run: |
+          set -e  # Exit on any error
           mkdir -p .github
           echo "${{ steps.get-version.outputs.latest_version }}" > .github/.emojibase-version
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
           git add .github/.emojibase-version
           git commit -m "Update tracked emojibase version to ${{ steps.get-version.outputs.latest_version }}"
           git push
