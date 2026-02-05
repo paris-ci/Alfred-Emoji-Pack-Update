@@ -1,0 +1,14 @@
+# Cache directories used during snippet generation
+cache/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# IDE
+.vscode/
+*.swp
+*.swo
+*~
