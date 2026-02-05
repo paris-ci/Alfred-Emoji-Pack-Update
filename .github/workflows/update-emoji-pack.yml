@@ -57,14 +57,15 @@ jobs:
           LATEST_MAJOR="${{ steps.get-version.outputs.major_version }}"
           STORED_MAJOR="${{ steps.get-version.outputs.stored_major }}"
           
-          if [ "$STORED_MAJOR" != "$LATEST_MAJOR" ] && [ "$STORED_MAJOR" != "0" ]; then
-            echo "Major version changed from $STORED_MAJOR to $LATEST_MAJOR"
-            echo "should_update=true" >> $GITHUB_OUTPUT
-          elif [ "$STORED_MAJOR" = "0" ]; then
-            echo "First run, will update"
+          if [ "$STORED_MAJOR" != "$LATEST_MAJOR" ]; then
+            if [ "$STORED_MAJOR" = "0" ]; then
+              echo "First run, initializing with version $LATEST_MAJOR"
+            else
+              echo "Major version changed from $STORED_MAJOR to $LATEST_MAJOR"
+            fi
             echo "should_update=true" >> $GITHUB_OUTPUT
           else
-            echo "No major version change"
+            echo "No major version change (current: $LATEST_MAJOR)"
             echo "should_update=false" >> $GITHUB_OUTPUT
           fi
       
@@ -82,6 +83,12 @@ jobs:
       - name: Commit and push changes
         if: steps.check-update.outputs.should_update == 'true'
         run: |
+          # Verify snippets were generated
+          if [ ! -d "snippets" ] || [ -z "$(ls -A snippets/*.alfredsnippets 2>/dev/null)" ]; then
+            echo "Error: No snippet files were generated"
+            exit 1
+          fi
+          
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add snippets/ .github/.emojibase-version
