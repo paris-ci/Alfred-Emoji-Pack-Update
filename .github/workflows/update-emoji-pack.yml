@@ -69,15 +69,20 @@ jobs:
             echo "First run, initializing with version $LATEST_MAJOR"
             echo "should_update=true" >> $GITHUB_OUTPUT
           else
+            # Ensure stored major is numeric before comparison
             if ! [[ "$STORED_MAJOR" =~ ^[0-9]+$ ]]; then
               echo "Error: Stored major version is not numeric: $STORED_MAJOR"
               exit 1
             fi
+            
             if [ "$STORED_MAJOR" -lt "$LATEST_MAJOR" ]; then
               echo "Major version increased from $STORED_MAJOR to $LATEST_MAJOR"
               echo "should_update=true" >> $GITHUB_OUTPUT
+            elif [ "$STORED_MAJOR" -eq "$LATEST_MAJOR" ]; then
+              echo "Major version unchanged (current: $LATEST_MAJOR)"
+              echo "should_update=false" >> $GITHUB_OUTPUT
             else
-              echo "No major version increase (current: $LATEST_MAJOR, stored: $STORED_MAJOR)"
+              echo "Latest major version ($LATEST_MAJOR) is older than stored version ($STORED_MAJOR) - skipping"
               echo "should_update=false" >> $GITHUB_OUTPUT
             fi
           fi
@@ -98,7 +103,13 @@ jobs:
         if: steps.check-update.outputs.should_update == 'true'
         run: |
           set -e  # Exit on any error
-          # Verify snippets were generated
+          
+          # Verify snippets directory exists and contains generated files
+          if [ ! -d "snippets" ]; then
+            echo "Error: Snippets directory does not exist"
+            exit 1
+          fi
+          
           if ! find snippets -name '*.alfredsnippets' -type f 2>/dev/null | grep -q .; then
             echo "Error: No snippet files were generated"
             exit 1
