@@ -62,18 +62,24 @@ def get_shortcodes(shortcodes, hexcode):
 
 def main():
     emojis_to_convert = {}  # {"shortcode": "emoji"}
+    unicode_version = 0
 
     for language in config.languages_to_generate:
         shortcodes = download_shortcodes(language)
         emoji_file = download_emoji_file(language)
         for emoji_info in emoji_file:
             emoji = emoji_info["emoji"]
+            unicode_version = max(unicode_version, emoji_info.get("version", 0))
             for shortcode in get_shortcodes(shortcodes, emoji_info['hexcode']):
                 emojis_to_convert[shortcode] = emoji
             if config.enable_skins:
                 for skin in emoji_info.get("skins", []):
                     for shortcode in get_shortcodes(shortcodes, skin['hexcode']):
                         emojis_to_convert[shortcode] = skin["emoji"]
+
+    print(f"Generating snippets for Unicode Emoji {unicode_version}")
+    print(f"Total emojis: {len(emojis_to_convert)}")
+    print()
 
     for shortcode, emoji in emojis_to_convert.items():
         print(f":{shortcode}:  ⟶  {emoji}")
