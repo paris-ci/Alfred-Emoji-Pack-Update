@@ -33,6 +33,13 @@ jobs:
         run: |
           # Get the latest version from npm
           LATEST_VERSION=$(curl -s https://registry.npmjs.org/emojibase-data | jq -r '.["dist-tags"].latest')
+          
+          # Validate that we got a version
+          if [ -z "$LATEST_VERSION" ] || [ "$LATEST_VERSION" = "null" ]; then
+            echo "Error: Failed to fetch latest version from npm registry"
+            exit 1
+          fi
+          
           echo "Latest version: $LATEST_VERSION"
           echo "latest_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
           
@@ -90,7 +97,10 @@ jobs:
       - name: Run main.py
         if: steps.check-update.outputs.should_update == 'true'
         run: |
+          set -e  # Exit on any error
+          echo "Running main.py to generate emoji snippets..."
           python main.py
+          echo "main.py completed successfully"
       
       - name: Configure git
         if: steps.check-update.outputs.should_update == 'true'
